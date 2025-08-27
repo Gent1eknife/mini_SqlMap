@@ -1,0 +1,42 @@
+version: '3.7'
+services:
+  db:
+    image: mysql:5.7
+    container_name: sqlmap_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: teachdb
+    volumes:
+      - ./teach.sql:/docker-entrypoint-initdb.d/teach.sql
+    # 只对web容器开放数据库端口
+    expose:
+      - "3306"
+
+  web:
+    image: php:7.4-apache
+    container_name: sqlmap_web
+    restart: always
+    volumes:
+      - ./web:/var/www/html
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=teachdb
+
+  app:
+    build: .
+    container_name: sqlmaplab
+    volumes:
+      - ./sqlmap:/opt/sqlmap
+      - ./teach:/opt/teach
+    tty: true
+    depends_on:
+      - web
+    entrypoint: ["bash"]
+
